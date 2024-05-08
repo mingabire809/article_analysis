@@ -12,6 +12,8 @@ from .sports_lexicon import sports_lexicon
 from .sports_keywords import sports_keywords
 import requests
 from bs4 import BeautifulSoup
+import spacy
+import pytextrank
 
 
 class CustomSentimentIntensityAnalyzer(SentimentIntensityAnalyzer):
@@ -78,13 +80,21 @@ class ArticlesView(APIView):
             
             # Analyze sentiment of the extracted content
             sentiment_result = analyze_sentiment(paragraph_content)
+            nlp = spacy.load("en_core_web_lg")
+            nlp.add_pipe("textrank")
+            doc = nlp(paragraph_content)
+
+            for sent in doc._.textrank.summary(limit_sentences=5):
+                print(sent)
+            summary = '\n'.join(str(sent) for sent in doc._.textrank.summary(limit_sentences=5))
             
             # Prepare JSON response
             response_data = {
                 #'paragraph_content': paragraph_content,
                 'title': title_text,
                 'image': image_url,
-                'sentiment_result': sentiment_result
+                'sentiment_result': sentiment_result,
+                'summary': summary
             }
             
             # Return the JSON response
